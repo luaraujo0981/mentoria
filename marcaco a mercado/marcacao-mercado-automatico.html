@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Marcação a Mercado</title>
+    <style>
+        :root {
+            --primary: #6a5acd;
+            --primary-light: #8678e2;
+            --secondary: #ff7f50;
+            --light: #f5f5f5;
+            --dark: #333;
+            --success: #4caf50;
+            --danger: #f44336;
+            --warning: #ff9800;
+            --info: #2196f3;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 30px 0;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+        
+        .cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            min-width: 250px;
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card h2 {
+            color: var(--primary);
+            margin-top: 0;
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 10px;
+        }
+        
+        .simulator {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input[type="range"], 
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        input[type="range"] {
+            padding: 0;
+        }
+        
+        .range-values {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            color: #666;
+        }
+        
+        .positive {
+            color: var(--success);
+            font-weight: bold;
+        }
+        
+        .negative {
+            color: var(--danger);
+            font-weight: bold;
+        }
+        
+        .results {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 30px;
+        }
+        
+        .emotional-impact {
+            background-color: #f7f7f7;
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            margin: 20px 0;
+            font-style: italic;
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted black;
+            cursor: help;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 250px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -125px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        
+        .alert-success {
+            background-color: rgba(76, 175, 80, 0.1);
+            border-left: 4px solid var(--success);
+        }
+        
+        .alert-warning {
+            background-color: rgba(255, 152, 0, 0.1);
+            border-left: 4px solid var(--warning);
+        }
+        
+        .alert-danger {
+            background-color: rgba(244, 67, 54, 0.1);
+            border-left: 4px solid var(--danger);
+        }
+        
+        .alert-info {
+            background-color: rgba(33, 150, 243, 0.1);
+            border-left: 4px solid var(--info);
+        }
+        
+        .faq {
+            margin-top: 40px;
+        }
+        
+        .faq-item {
+            margin-bottom: 20px;
+        }
+        
+        .faq-question {
+            font-weight: bold;
+            color: var(--primary);
+            cursor: pointer;
+            padding: 10px;
+            background-color: rgba(106, 90, 205, 0.1);
+            border-radius: 5px;
+        }
+        
+        .faq-answer {
+            padding: 10px;
+            background-color: white;
+            border-radius: 0 0 5px 5px;
+            display: none;
+        }
+        
+        .faq-question:hover {
+            background-color: rgba(106, 90, 205, 0.2);
+        }
+        
+        .emotion-meter {
+            display: flex;
+            flex-direction: column;
+            margin: 15px 0;
+            padding: 15px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .emotion-items {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .emotion-item {
+            text-align: center;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        
+        .emotion-item:hover {
+            background-color: #f0f0f0;
+            transform: scale(1.05);
+        }
+        
+        .emotion-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .emotion-label {
+            font-size: 14px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .tab-container {
+            margin-bottom: 30px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .tab.active {
+            background-color: white;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 5px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: var(--primary);
+            animation: spin 1s ease infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 10px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            margin-right: 10px;
+        }
+        
+        .btn:hover {
+            background-color: var(--primary-light);
+        }
+        
+        @media (max-width: 768px) {
+            .cards {
+                flex-direction: column;
+            }
+            
+            .card {
+                width: 100%;
+            }
+            
+            .emotion-items {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .emotion-item {
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Simulador de Marcação a Mercado</h1>
+            <div class="subtitle">Entenda como seus investimentos são afetados pelas oscilações do mercado</div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="cards">
+            <div class="card">
+                <h2>O que é Marcação a Mercado?</h2>
+                <p>É o processo de atualização diária do valor de um título de acordo com as condições atuais do mercado. Isso significa que o valor do seu investimento pode variar para cima ou para baixo antes do vencimento.</p>
+                <p>Essa variação é normal e não significa perda efetiva caso você mantenha o título até o vencimento.</p>
+                
+                <div class="emotional-impact">
+                    <p>Muitos investidores ficam ansiosos ao verem o valor de seus investimentos caindo temporariamente, mas entender esse processo pode trazer tranquilidade para sua jornada de investimentos.</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Impacto das Taxas de Juros</h2>
+                <p>A relação entre preço e taxa de juros é inversa:</p>
+                <ul>
+                    <li><strong>Quando as taxas sobem:</strong> o valor dos títulos prefixados e de inflação cai</li>
+                    <li><strong>Quando as taxas caem:</strong> o valor dos títulos prefixados e de inflação sobe</li>
+                </ul>
+                <p>Os títulos mais longos sofrem maior impacto das variações de taxas de juros.</p>
+            </div>
+        </div>
+
+        <div class="simulator">
+            <h2>Simulador de Marcação a Mercado</h2>
+            <p>Experimente como diferentes cenários de taxas de juros afetam seus investimentos:</p>
+            
+            <div class="tab-container">
+                <div class="tabs">
+                    <div class="tab active" onclick="selectTab('titulo-prefixado')">Título Prefixado</div>
+                    <div class="tab" onclick="selectTab('titulo-inflacao')">Título Atrelado à Inflação</div>
+                </div>
+                
+                <div id="titulo-prefixado" class="tab-content active">
+                    <div class="form-group">
+                        <label for="investimento-prefixado">Valor do Investimento (R$):</label>
+                        <input type="number" id="investimento-prefixado" value="10000" min="1000" step="1000" oninput="calcularMarcacaoMercadoPrefixado()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taxa-contratada">Taxa Contratada (% a.a.):</label>
+                        <input type="number" id="taxa-contratada" value="11.50" min="5" max="20" step="0.25" oninput="calcularMarcacaoMercadoPrefixado()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="prazo-prefixado">Prazo (anos): <span id="prazo-prefixado-value">3 anos</span></label>
+                        <input type="range" id="prazo-prefixado" min="1" max="10" value="3" step="1" oninput="updatePrazoValue('prefixado'); calcularMarcacaoMercadoPrefixado()">
+                        <div class="range-values">
+                            <span>1 ano</span>
+                            <span>5 anos</span>
+                            <span>10 anos</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taxa-mercado">Taxa Atual do Mercado (% a.a.): <span id="taxa-mercado-value">11.50% a.a.</span></label>
+                        <input type="range" id="taxa-mercado" min="7" max="16" value="11.50" step="0.25" oninput="updateTaxaMercadoValue(); calcularMarcacaoMercadoPrefixado()">
+                        <div class="range-values">
+                            <span>7% a.a.</span>
+                            <span>11.5% a.a.</span>
+                            <span>16% a.a.</span>
+                        </div>
+                    </div>
+                    
+                    <div class="results" id="results-prefixado">
+                        <!-- Os resultados serão inseridos aqui -->
+                    </div>
+                </div>
+                
+                <div id="titulo-inflacao" class="tab-content">
+                    <div class="form-group">
+                        <label for="investimento-inflacao">Valor do Investimento (R$):</label>
+                        <input type="number" id="investimento-inflacao" value="10000" min="1000" step="1000" oninput="calcularMarcacaoMercadoInflacao()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taxa-contratada-inflacao">Taxa Contratada (% a.a. + IPCA):</label>
+                        <input type="number" id="taxa-contratada-inflacao" value="5.50" min="2" max="8" step="0.25" oninput="calcularMarcacaoMercadoInflacao()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ipca-estimado">IPCA Estimado (% a.a.):</label>
+                        <input type="number" id="ipca-estimado" value="4.50" min="2" max="10" step="0.25" oninput="calcularMarcacaoMercadoInflacao()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="prazo-inflacao">Prazo (anos): <span id="prazo-inflacao-value">5 anos</span></label>
+                        <input type="range" id="prazo-inflacao" min="1" max="10" value="5" step="1" oninput="updatePrazoValue('inflacao'); calcularMarcacaoMercadoInflacao()">
+                        <div class="range-values">
+                            <span>1 ano</span>
+                            <span>5 anos</span>
+                            <span>10 anos</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taxa-mercado-inflacao">Taxa Atual do Mercado (% a.a. + IPCA): <span id="taxa-mercado-inflacao-value">5.50% a.a. + IPCA</span></label>
+                        <input type="range" id="taxa-mercado-inflacao" min="2" max="8" value="5.50" step="0.25" oninput="updateTaxaMercadoInflacaoValue(); calcularMarcacaoMercadoInflacao()">
+                        <div class="range-values">
+                            <span>2% a.a.</span>
+                            <span>5% a.a.</span>
+                            <span>8% a.a.</span>
+                        </div>
+                    </div>
+                    
+                    <div class="results" id="results-inflacao">
+                        <!-- Os resultados serão inseridos aqui -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="emotion-meter">
+            <h3>Como você se sente sobre as oscilações nos seus investimentos?</h3>
+            <div class="emotion-items">
+                <div class="emotion-item" onclick="selectEmotion('muito-ansioso')">
+                    <div class="emotion-icon">😰</div>
+                    <div class="emotion-label">Muito Ansioso</div>
+                </div>
+                <div class="emotion-item" onclick="selectEmotion('preocupado')">
+                    <div class="emotion-icon">😟</div>
+                    <div class="emotion-label">Preocupado</div>
+                </div>
+                <div class="emotion-item" onclick="selectEmotion('neutro')">
+                    <div class="emotion-icon">😐</div>
+                    <div class="emotion-label">Neutro</div>
+                </div>
+                <div class="emotion-item" onclick="selectEmotion('confiante')">
+                    <div class="emotion-icon">😊</div>
+                    <div class="emotion-label">Confiante</div>
+                </div>
+                <div class="emotion-item" onclick="selectEmotion('muito-confiante')">
+                    <div class="emotion-icon">😎</div>
+                    <div class="emotion-label">Muito Confiante</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="emotion-feedback" style="display: none;" class="alert alert-info">
+            <!-- Feedback será inserido aqui -->
+        </div>
+        
+        <div class="faq">
+            <h2>Perguntas Frequentes</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">Devo me preocupar com a marcação a mercado se meu objetivo é manter o título até o vencimento?</div>
+                <div class="faq-answer">
+                    <p>Se você planeja manter seu investimento até o vencimento, a marcação a mercado é apenas uma variação temporária no valor. No vencimento, você receberá exatamente o valor acordado no momento da aplicação (principal + juros).</p>
+                    <p>A marcação a mercado só implica em ganho ou perda real se você decidir vender o título antes do vencimento.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">Por que os títulos mais longos sofrem maior impacto com a variação das taxas?</div>
+                <div class="faq-answer">
+                    <p>Os títulos mais longos possuem um "efeito composto" da variação das taxas. Como o dinheiro fica aplicado por mais tempo, a diferença entre a taxa contratada e a taxa atual do mercado se amplifica proporcionalmente ao prazo.</p>
+                    <p>Quanto maior o prazo, maior a sensibilidade do título às variações nas taxas de juros.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">Qual é a diferença na marcação a mercado de títulos prefixados e títulos de inflação?</div>
+                <div class="faq-answer">
+                    <p>Títulos prefixados são afetados principalmente pela variação da taxa básica de juros (Selic) e pelas expectativas futuras de juros.</p>
+                    <p>Já os títulos atrelados à inflação (como IPCA+) são impactados tanto pela variação das taxas de juros reais quanto pelas expectativas de inflação futura.</p>
+                    <p>Em geral, os títulos de inflação tendem a ser mais estáveis na marcação a mercado, pois parte da oscilação pode ser compensada pela variação da inflação.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">Como posso usar a marcação a mercado a meu favor?</div>
+                <div class="faq-answer">
+                    <p>Você pode aproveitar momentos de alta nas taxas de juros (e queda nos preços dos títulos) para comprar títulos com taxas mais atrativas.</p>
+                    <p>Inversamente, quando as taxas caem, o valor de mercado dos seus títulos sobe, o que pode ser um bom momento para vender caso precise do dinheiro ou queira realocar seus investimentos.</p>
+                    <p>Entender a marcação a mercado permite tomar decisões mais informadas sobre o timing de compras e vendas de títulos.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" onclick="imprimirPagina()">Imprimir</button>
+            <button class="btn" onclick="salvarPDF()">Salvar como PDF</button>
+            <button class="btn" onclick="compartilhar()">Compartilhar</button>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>© 2023 Simulador de Marcação a Mercado | Ferramenta para Educação Financeira e Emocional</p>
+    </div>
+
+    <script>
+        // Função para selecionar a aba
+        function selectTab(tabId) {
+            // Ocultar todos os conteúdos de abas
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Desativar todas as abas
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Ativar a aba selecionada
+            document.getElementById(tabId).classList.add('active');
+            
+            // Encontrar e ativar o botão da aba
+            const tabElements = document.querySelectorAll('.tab');
+            tabElements.forEach(tab => {
+                if (tab.getAttribute('onclick').includes(tabId)) {
+                    tab.classList.add('active');
+                }
+            });
+        }
+        
+        // Atualizar o valor do prazo exibido
+        function updatePrazoValue(tipo) {
+            const prazoElement = document.getElementById(`prazo-${tipo}`);
+            const prazoValueElement = document.getElementById(`prazo-${tipo}-value`);
+            
+            prazoValueElement.innerText = `${prazoElement.value} ${prazoElement.value == 1 ? 'ano' : 'anos'}`;
+        }
+        
+        // Atualizar o valor da taxa de mercado exibida
+        function updateTaxaMercadoValue() {
+            const taxaMercadoElement = document.getElementById('taxa-mercado');
+            const taxaMercadoValueElement = document.getElementById('taxa-mercado-value');
+            
+            taxaMercadoValueElement.innerText = `${taxaMercadoElement.value}% a.a.`;
+        }
+        
+        // Atualizar o valor da taxa de mercado (inflação) exibida
+        function updateTaxaMercadoInflacaoValue() {
+            const taxaMercadoInflacaoElement = document.getElementById('taxa-mercado-inflacao');
+            const taxaMercadoInflacaoValueElement = document.getElementById('taxa-mercado-inflacao-value');
+            
+            taxaMercadoInflacaoValueElement.innerText = `${taxaMercadoInflacaoElement.value}% a.a. + IPCA`;
+        }
+        
+        // Calcular a marcação a mercado para título prefixado
+        function calcularMarcacaoMercadoPrefixado() {
+            const investimento = parseFloat(document.getElementById('investimento-prefixado').value);
+            const taxaContratada = parseFloat(document.getElementById('taxa-contratada').value) / 100;
+            const prazo = parseInt(document.getElementById('prazo-prefixado').value);
+            const taxaMercado = parseFloat(document.getElementById('taxa-mercado').value) / 100;
+            
+            // Validar os valores
+            if (!isFinite(investimento) || !isFinite(taxaContratada) || !isFinite(prazo) || !isFinite(taxaMercado)) {
+                return;
+            }
+            
+            // Valor futuro no vencimento
+            const valorFuturo = investimento * Math.pow(1 + taxaContratada, prazo);
+            
+            // Valor presente considerando a taxa atual do mercado
+            const valorMercado = valorFuturo / Math.pow(1 + taxaMercado, prazo);
+            
+            // Variação percentual
+            const variacao = ((valorMercado / investimento) - 1) * 100;
+            
+            // Determinar status e mensagem emocional
+            let status, mensagemEmocional, alertClass;
+            if (variacao > 0) {
+                status = 'Valorização';
+                mensagemEmocional = 'Que ótimo! Seu investimento está valendo mais do que você pagou por ele. Este pode ser um bom momento para avaliar se deseja manter ou realizar o lucro.';
+                alertClass = 'alert-success';
+            } else if (variacao < 0) {
+                status = 'Desvalorização';
+                mensagemEmocional = 'Não se preocupe! Essa desvalorização é temporária. Se mantiver o título até o vencimento, receberá exatamente o valor futuro calculado no momento da aplicação.';
+                alertClass = 'alert-warning';
+            } else {
+                status = 'Estável';
+                mensagemEmocional = 'Seu investimento está estável, com a taxa contratada igual à taxa atual do mercado.';
+                alertClass = 'alert-info';
+            }
+            
+            // Classe para formatar valores monetários
+            const formatadorMoeda = new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+                minimumFractionDigits: 2
+            });
+            
+            // Criar HTML com os resultados
+            let resultadoHTML = `
+                <h3>Resultados da Marcação a Mercado</h3>
+                <table>
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Valor</th>
+                    </tr>
+                    <tr>
+                        <td>Valor Investido</td>
+                        <td>${formatadorMoeda.format(investimento)}</td>
+                    </tr>
+                    <tr>
+                        <td>Taxa Contratada</td>
+                        <td>${(taxaContratada * 100).toFixed(2)}% a.a.</td>
+                    </tr>
+                    <tr>
+                        <td>Prazo</td>
+                        <td>${prazo} ${prazo === 1 ? 'ano' : 'anos'}</td>
+                    </tr>
+                    <tr>
+                        <td>Valor no Vencimento</td>
+                        <td>${formatadorMoeda.format(valorFuturo)}</td>
+                    </tr>
+                    <tr>
+                        <td>Taxa Atual do Mercado</td>
+                        <td>${(taxaMercado * 100).toFixed(2)}% a.a.</td>
+                    </tr>
+                    <tr>
+                        <td>Valor Atual (Marcação a Mercado)</td>
+                        <td>${formatadorMoeda.format(valorMercado)}</td>
+                    </tr>
+                    <tr>
+                        <td>Variação</td>
+                        <td class="${variacao >= 0 ? 'positive' : 'negative'}">${variacao.toFixed(2)}%</td>
+                    </tr>
+                    <tr>
+                        <td>Status</td>
+                        <td>${status}</td>
+                    </tr>
+                </table>
+                
+                <div class="alert ${alertClass}">
+                    <strong>Impacto Emocional:</strong> ${mensagemEmocional}
+                </div>
+                
+                <div class="alert alert-info">
+                    <strong>Importante:</strong> Lembre-se que a marcação a mercado só representa um ganho ou perda real se você vender o título antes do vencimento. Caso mantenha até o final do prazo, receberá exatamente o valor contratado.
+                </div>
+            `;
+            
+            // Exibir resultados
+            document.getElementById('results-prefixado').innerHTML = resultadoHTML;
+        }
+        
+        // Calcular a marcação a mercado para título atrelado à inflação
+        function calcularMarcacaoMercadoInflacao() {
+            const investimento = parseFloat(document.getElementById('investimento-inflacao').value);
+            const taxaContratada = parseFloat(document.getElementById('taxa-contratada-inflacao').value) / 100;
+            const ipcaEstimado = parseFloat(document.getElementById('ipca-estimado').value) / 100;
+            const prazo = parseInt(document.getElementById('prazo-inflacao').value);
+            const taxaMercado = parseFloat(document.getElementById('taxa-mercado-inflacao').value) / 100;
+            
+            // Validar os valores
+            if (!isFinite(investimento) || !isFinite(taxaContratada) || !isFinite(ipcaEstimado) || !isFinite(prazo) || !isFinite(taxaMercado)) {
+                return;
+            }
+            
+            // Calcular taxa total (taxa real + inflação)
+            const taxaTotal = (1 + taxaContratada) * (1 + ipcaEstimado) - 1;
+            const taxaMercadoTotal = (1 + taxaMercado) * (1 + ipcaEstimado) - 1;
+            
+            // Valor futuro no vencimento
+            const valorFuturo = investimento * Math.pow(1 + taxaTotal, prazo);
+            
+            // Valor presente considerando a taxa atual do mercado
+            const valorMercado = valorFuturo / Math.pow(1 + taxaMercadoTotal, prazo);
+            
+            // Variação percentual
+            const variacao = ((valorMercado / investimento) - 1) * 100;
+            
+            // Determinar status e mensagem emocional
+            let status, mensagemEmocional, alertClass;
+            if (variacao > 0) {
+                status = 'Valorização';
+                mensagemEmocional = 'Excelente! Seu investimento atrelado à inflação está valendo mais do que você pagou por ele. Você está protegido tanto contra a inflação quanto ganhando com a variação das taxas.';
+                alertClass = 'alert-success';
+            } else if (variacao < 0) {
+                status = 'Desvalorização';
+                mensagemEmocional = 'Mantenha a calma! Mesmo com essa desvalorização temporária, seu investimento continua protegido contra a inflação no longo prazo. Se mantiver até o vencimento, receberá o valor previsto.';
+                alertClass = 'alert-warning';
+            } else {
+                status = 'Estável';
+                mensagemEmocional = 'Seu investimento está estável, com a taxa contratada igual à taxa atual do mercado, mantendo a proteção contra a inflação.';
+                alertClass = 'alert-info';
+            }
+            
+            // Classe para formatar valores monetários
+            const formatadorMoeda = new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+                minimumFractionDigits: 2
+            });
+            
+            // Criar HTML com os resultados
+            let resultadoHTML = `
+                <h3>Resultados da Marcação a Mercado (Título atrelado à inflação)</h3>
+                <table>
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Valor</th>
+                    </tr>
+                    <tr>
+                        <td>Valor Investido</td>
+                        <td>${formatadorMoeda.format(investimento)}</td>
+                    </tr>
+                    <tr>
+                        <td>Taxa Contratada</td>
+                        <td>${(taxaContratada * 100).toFixed(2)}% a.a. + IPCA</td>
+                    </tr>
+                    <tr>
+                        <td>IPCA Estimado</td>
+                        <td>${(ipcaEstimado * 100).toFixed(2)}% a.a.</td>
+                    </tr>
+                    <tr>
+                        <td>Taxa Total Estimada</td>
+                        <td>${(taxaTotal * 100).toFixed(2)}% a.a.</td>
+                    </tr>
+                    <tr>
+                        <td>Prazo</td>
+                        <td>${prazo} ${prazo === 1 ? 'ano' : 'anos'}</td>
+                    </tr>
+                    <tr>
+                        <td>Valor no Vencimento</td>
+                        <td>${formatadorMoeda.format(valorFuturo)}</td>
+                    </tr>
+                    <tr>
+                        <td>Taxa Atual do Mercado</td>
+                        <td>${(taxaMercado * 100).toFixed(2)}% a.a. + IPCA</td>
+                    </tr>
+                    <tr>
+                        <td>Valor Atual (Marcação a Mercado)</td>
+                        <td>${formatadorMoeda.format(valorMercado)}</td>
+                    </tr>
+                    <tr>
+                        <td>Variação</td>
+                        <td class="${variacao >= 0 ? 'positive' : 'negative'}">${variacao.toFixed(2)}%</td>
+                    </tr>
+                    <tr>
+                        <td>Status</td>
+                        <td>${status}</td>
+                    </tr>
+                </table>
+                
+                <div class="alert ${alertClass}">
+                    <strong>Impacto Emocional:</strong> ${mensagemEmocional}
+                </div>
+                
+                <div class="alert alert-info">
+                    <strong>Importante:</strong> Títulos atrelados à inflação oferecem dupla proteção: contra a inflação e com juros reais. A marcação a mercado só representa um ganho ou perda real se você vender o título antes do vencimento.
+                </div>
+            `;
+            
+            // Exibir resultados
+            document.getElementById('results-inflacao').innerHTML = resultadoHTML;
+        }
+        
+        // Função para expandir/recolher FAQs
+        function toggleFaq(element) {
+            const answer = element.nextElementSibling;
+            if (answer.style.display === 'block') {
+                answer.style.display = 'none';
+            } else {
+                // Fechar todas as respostas
+                const allAnswers = document.querySelectorAll('.faq-answer');
+                allAnswers.forEach(ans => {
+                    ans.style.display = 'none';
+                });
+                // Abrir a resposta selecionada
+                answer.style.display = 'block';
+            }
+        }
+        
+        // Função para selecionar emoção
+        function selectEmotion(emotion) {
+            const feedbackElement = document.getElementById('emotion-feedback');
+            let message = '';
+            
+            switch(emotion) {
+                case 'muito-ansioso':
+                    message = `
+                        <h3>Entendemos sua ansiedade</h3>
+                        <p>É normal se sentir ansioso ao ver o valor dos seus investimentos oscilando. Lembre-se que:</p>
+                        <ul>
+                            <li>A marcação a mercado é apenas uma "fotografia" do momento</li>
+                            <li>Se mantiver até o vencimento, receberá exatamente o valor acordado</li>
+                            <li>Respirar fundo e olhar para o longo prazo pode ajudar a reduzir a ansiedade</li>
+                        </ul>
+                        <p>Considere revisar sua alocação para incluir investimentos com menor volatilidade se isso estiver afetando muito seu bem-estar.</p>
+                    `;
+                    break;
+                case 'preocupado':
+                    message = `
+                        <h3>É natural se preocupar</h3>
+                        <p>Sua preocupação mostra que você se importa com seus investimentos, e isso é positivo! Considere:</p>
+                        <ul>
+                            <li>Revisar sua estratégia de investimentos para verificar se está alinhada com seu perfil</li>
+                            <li>Diversificar entre títulos de diferentes prazos pode ajudar a reduzir o impacto da marcação a mercado</li>
+                            <li>Estabelecer objetivos claros para cada investimento ajuda a manter o foco no longo prazo</li>
+                        </ul>
+                    `;
+                    break;
+                case 'neutro':
+                    message = `
+                        <h3>Equilíbrio é importante</h3>
+                        <p>Manter uma postura neutra mostra que você tem bom equilíbrio emocional em relação aos seus investimentos. Continue:</p>
+                        <ul>
+                            <li>Acompanhando regularmente seu portfólio, mas sem obsessão com oscilações diárias</li>
+                            <li>Avaliando periodicamente se sua estratégia continua alinhada com seus objetivos</li>
+                            <li>Buscando mais conhecimento sobre os instrumentos financeiros que utiliza</li>
+                        </ul>
+                    `;
+                    break;
+                case 'confiante':
+                    message = `
+                        <h3>Confiança é um grande diferencial</h3>
+                        <p>Sua confiança indica que você provavelmente entende bem o funcionamento do mercado. Aproveite para:</p>
+                        <ul>
+                            <li>Avaliar oportunidades quando o mercado apresenta maior volatilidade</li>
+                            <li>Compartilhar seu conhecimento com pessoas próximas que podem se beneficiar</li>
+                            <li>Considerar diversificar ainda mais seu portfólio para otimizar resultados</li>
+                        </ul>
+                    `;
+                    break;
+                case 'muito-confiante':
+                    message = `
+                        <h3>Excelente nível de segurança!</h3>
+                        <p>Sua alta confiança demonstra maturidade financeira. Use isso a seu favor:</p>
+                        <ul>
+                            <li>Aproveite momentos de alta volatilidade para ajustar posições estrategicamente</li>
+                            <li>Considere títulos de prazos mais longos que podem oferecer melhores taxas</li>
+                            <li>Lembre-se de revisar periodicamente seus investimentos para garantir que continuam alinhados com seus objetivos de longo prazo</li>
+                        </ul>
+                    `;
+                    break;
+            }
+            
+            feedbackElement.innerHTML = message;
+            feedbackElement.style.display = 'block';
+            
+            // Scroll suave até o feedback
+            feedbackElement.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Função para imprimir a página
+        function imprimirPagina() {
+            window.print();
+        }
+        
+        // Função para salvar como PDF
+        function salvarPDF() {
+            // Na prática, isso abre a janela de impressão onde o usuário pode escolher salvar como PDF
+            window.print();
+            alert("Para salvar como PDF, selecione 'Salvar como PDF' ou 'Microsoft Print to PDF' na opção de impressoras");
+        }
+        
+        // Função para compartilhar
+        function compartilhar() {
+            // Verificar se a API de compartilhamento está disponível
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Simulador de Marcação a Mercado',
+                    text: 'Veja como seus investimentos são afetados pela marcação a mercado',
+                    url: window.location.href,
+                })
+                .then(() => console.log('Compartilhado com sucesso'))
+                .catch((error) => console.log('Erro ao compartilhar', error));
+            } else {
+                // Fallback para browsers que não suportam a API Share
+                alert("Use o seguinte link para compartilhar: " + window.location.href);
+            }
+        }
+        
+        // Inicializar a página
+        window.onload = function() {
+            // Atualizar todos os valores exibidos
+            updatePrazoValue('prefixado');
+            updateTaxaMercadoValue();
+            updatePrazoValue('inflacao');
+            updateTaxaMercadoInflacaoValue();
+            
+            // Calcular resultados iniciais
+            calcularMarcacaoMercadoPrefixado();
+            calcularMarcacaoMercadoInflacao();
+        };
+    </script>
+</body>
+</html>
